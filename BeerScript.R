@@ -1,13 +1,14 @@
 library(tidyverse)
 library(USAboundaries)
 library(sf)
+library(biscale)
 
 # Picasso: "Drink to me, drink to my health. You know I can’t drink anymore.”  
 
 # Get the Data
 
-brewing_materials <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-03-31/brewing_materials.csv')
-beer_taxed <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-03-31/beer_taxed.csv')
+# brewing_materials <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-03-31/brewing_materials.csv')
+# beer_taxed <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-03-31/beer_taxed.csv')
 brewer_size <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-03-31/brewer_size.csv')
 beer_states <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-03-31/beer_states.csv')
 
@@ -30,7 +31,7 @@ brewer_size %>%
 #  geom_area(aes(year, prop_n, fill = size)) +
   geom_col(aes(year, prop_n, fill = size), width = 1) +
   scale_fill_manual(values = c("#ad8599", "#e09952", "#75abbd")) +
-  theme_minimal()
+  theme_minimal() 
 
 
 # now we want to add a map where we show the the per capita consumption per state and 
@@ -51,10 +52,11 @@ consumpt <- tibble(state = unique(beer_states$state)[1:51],
 # Get the US boundaries 
 boundaries <- us_states(states = unique(beer_states$state)[1:51])
 
+
 # bind with state consumption data
 # Get total production and percentage of beer per state, year, and type
 beer_states %>% 
-  filter(state != "total" & year == 2018) %>% 
+  filter(state != "total" & state != "AK" & state != "HI" & year == 2018) %>% 
   group_by(state) %>% 
   count(name = "production", wt = barrels) %>% 
   # group_by(year) %>% 
@@ -62,19 +64,24 @@ beer_states %>%
   left_join(consumpt, by= c("state")) %>% 
   filter(per_capita != is.na(per_capita)) %>% 
   left_join(boundaries, by = c("state" = "state_abbr")) %>% 
+  bi_class(x = production, y = per_capita , style = "quantile", dim = 3) %>%
   ggplot() +
-  geom_sf(aes(geometry = geometry)) 
+  geom_sf(aes(geometry=geometry, fill = bi_class),
+          color = "white", size = 0.1, show.legend = FALSE) +
+  bi_scale_fill(pal = "GrPink", dim = 3) +
+  bi_theme()
+  # my_theme
 
 
-+
-  geom_sf_label(aes(label = state,  geometry = geometry),
-                label.size = 0, size = 2, alpha = 0.6,
-                label.padding = unit(0.1, "lines")) +
-  coord_sf(xlim = c(-180, -65), expand = FALSE) +
-  facet_wrap(~type, ncol = 2) +
-  ggtitle("Total US Beer Production/Use in 2019") +
-  scale_fill_viridis_c() +
-  theme(axis.title = element_blank())
   
+  # geom_sf_label(aes(label = state,  geometry = geometry),
+  #               label.size = 0, size = 2, alpha = 0.6,
+  #               label.padding = unit(0.1, "lines")) +
+  # coord_sf(xlim = c(-180, -65), expand = FALSE) +
+  # facet_wrap(~type, ncol = 2) +
+  # ggtitle("Total US Beer Production/Use in 2019") +
+  # scale_fill_viridis_c() +
+  # theme(axis.title = element_blank())
+
   
 
