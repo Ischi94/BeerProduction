@@ -1,4 +1,5 @@
 library(tidyverse)
+library(USAboundaries)
 
 # Picasso: "Drink to me, drink to my health. You know I can’t drink anymore.”  
 
@@ -30,10 +31,13 @@ brewer_size %>%
   scale_fill_manual(values = c("#ad8599", "#e09952", "#75abbd")) +
   theme_minimal()
 
-# add consumption per capita/ 
+
+# now we want to add a map where we show the the per capita consumption per state and 
+# the consumption per state
+# add consumption per capita per state
 # source: https://eu.usatoday.com/story/money/2019/09/14/how-much-beer-did-the-average-person-drink-in-every-state/40109241/
 
-tibble(states = unique(beer_states$state)[1:51], 
+consumpt <- tibble(state = unique(beer_states$state)[1:51], 
        per_capita = c(26.9, 28.7, 23.4, 26.8, 25.1, 28.8, 20.0,
                       NA, 28.4, 26.4, 23.8, 30.6, 31.2, 26.4,
                       27.7, 23.1, 25.8, 22.9, 28.0, 22.9, 19.6,
@@ -43,4 +47,20 @@ tibble(states = unique(beer_states$state)[1:51],
                       24.5, 30.9, 18.6, 24.5, 33.3, 24.3, 33.6,
                       27.3, 30.1))
 
+# Get the US boundaries 
+boundaries <- us_states(states = unique(beer_states$state)[1:51])
+
+# bind with state consumption data
+# Get total production and percentage of beer per state, year, and type
+beer_states %>% 
+  filter(state != "total" & year == 2018) %>% 
+  group_by(state) %>% 
+  count(name = "production", wt = barrels) %>% 
+  # group_by(year) %>% 
+  # mutate(proportion = production/sum(production, na.rm = TRUE)*100) %>% 
+  left_join(consumpt, by= c("state")) %>% 
+  filter(per_capita != is.na(per_capita)) %>% 
+  ggplot() +
+  
+  
 
