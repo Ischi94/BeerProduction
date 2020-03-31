@@ -2,8 +2,8 @@ library(tidyverse)
 library(USAboundaries)
 library(sf)
 library(biscale)
+library(cowplot)
 
-# Picasso: "Drink to me, drink to my health. You know I can’t drink anymore.”  
 
 # Get the Data
 
@@ -13,8 +13,8 @@ brewer_size <- readr::read_csv('https://raw.githubusercontent.com/rfordatascienc
 beer_states <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-03-31/beer_states.csv')
 
 # first keep it simple and look at brewer sizes per year
-# we want a time series vs. total_barrels per brewer size
-# before that, we divide brewer size in 3 categories: small, medium, large
+# I want a time series vs. total_barrels per brewer size
+# before that, I divide brewer size in 3 categories: small, medium, large
 brewer_quant <- brewer_size %>% {quantile(.$total_barrels, na.rm = T)}
 
 brewer_size %>% 
@@ -55,7 +55,8 @@ boundaries <- us_states(states = unique(beer_states$state)[1:51])
 
 # bind with state consumption data
 # Get total production and percentage of beer per state, year, and type
-beer_states %>% 
+# produce plot
+map <- beer_states %>% 
   filter(state != "total" & state != "AK" & state != "HI" & year == 2018) %>% 
   group_by(state) %>% 
   count(name = "production", wt = barrels) %>% 
@@ -69,19 +70,41 @@ beer_states %>%
   geom_sf(aes(geometry=geometry, fill = bi_class),
           color = "white", size = 0.1, show.legend = FALSE) +
   bi_scale_fill(pal = "GrPink", dim = 3) +
-  bi_theme()
-  # my_theme
-
+  labs(title = "Can you keep pace?",
+       subtitle = "Beer production and per-capita consumption, USA 2018", 
+       caption = "Alcohol and Tobacco Tax and Trade Bureau (TTB)\n
+       USAtoday\n
+       Gregor Mathes 2020") +
+  bi_theme(base_size = 12, font_color = "#262626") +
+  theme(plot.margin = unit(c(.1, .5, .2, .1), "cm"),
+        plot.title = element_text(hjust = 0.5, 
+                                  margin = margin(t = 0,
+                                                  b = .2,
+                                                  unit = "cm"),),
+        plot.subtitle = element_text(size= 10, 
+                                     hjust = 0.5,
+                                     debug = F, 
+                                     margin = margin(t = 0,
+                                                     b = .3,
+                                                     unit = "cm"),),
+        plot.caption = element_text(size = 7,
+                                    hjust = 1,
+                                    margin = margin(t = -0.4,
+                                                    b = 0,
+                                                    unit = "cm"),
+                                    lineheight = .5,
+                                    color = "#939184"))
 
   
-  # geom_sf_label(aes(label = state,  geometry = geometry),
-  #               label.size = 0, size = 2, alpha = 0.6,
-  #               label.padding = unit(0.1, "lines")) +
-  # coord_sf(xlim = c(-180, -65), expand = FALSE) +
-  # facet_wrap(~type, ncol = 2) +
-  # ggtitle("Total US Beer Production/Use in 2019") +
-  # scale_fill_viridis_c() +
-  # theme(axis.title = element_blank())
+map_legend <- bi_legend(pal = "GrPink",
+                    dim = 3,
+                    xlab = "Production ",
+                    ylab = "Consumption ",
+                    size = 8)  
 
-  
+# combine map with legend
+ggdraw() +
+  draw_plot(map, 0, 0, 1, 1) +
+  draw_plot(map_legend, 0, 0, 0.35, 0.35)
 
+ggsave(filename = "keep_pace.png")
