@@ -1,5 +1,6 @@
 library(tidyverse)
 library(USAboundaries)
+library(sf)
 
 # Picasso: "Drink to me, drink to my health. You know I can’t drink anymore.”  
 
@@ -60,7 +61,20 @@ beer_states %>%
   # mutate(proportion = production/sum(production, na.rm = TRUE)*100) %>% 
   left_join(consumpt, by= c("state")) %>% 
   filter(per_capita != is.na(per_capita)) %>% 
+  left_join(boundaries, by = c("state" = "state_abbr")) %>% 
   ggplot() +
+  geom_sf(aes(geometry = geometry)) 
+
+
++
+  geom_sf_label(aes(label = state,  geometry = geometry),
+                label.size = 0, size = 2, alpha = 0.6,
+                label.padding = unit(0.1, "lines")) +
+  coord_sf(xlim = c(-180, -65), expand = FALSE) +
+  facet_wrap(~type, ncol = 2) +
+  ggtitle("Total US Beer Production/Use in 2019") +
+  scale_fill_viridis_c() +
+  theme(axis.title = element_blank())
   
   
 
