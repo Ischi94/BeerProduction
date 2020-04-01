@@ -67,6 +67,8 @@ brewer_size %>%
   ggplot(aes(year, n, colour = size)) +
   geom_point(size = 3, show.legend = F) +
   geom_line(size = 1.3, show.legend = F) +
+  geom_segment(aes(xend = 2019.3, yend = n, group = size),
+               linetype = 2, colour = 'grey') + 
   scale_fill_manual(values = c("#ad8599", "#e09952", "#75abbd")) +
   geom_text(aes(x = 2019, label = size), 
             hjust = -0.5, show.legend = F, size = 5) +
