@@ -3,7 +3,7 @@ library(USAboundaries)
 library(sf)
 library(biscale)
 library(cowplot)
-
+library(gganimate)
 
 # Get the Data
 
@@ -54,7 +54,13 @@ brewer_size %>%
   geom_point(aes(colour = size), size=3, show.legend = F) +
   facet_grid( ~ size) +
   scale_fill_manual(values = c("#ad8599", "#e09952", "#75abbd")) +
-  theme_minimal()
+  scale_x_continuous(breaks=seq(2009, 2019, 2)) +
+  labs(title = "Year: {as.integer(frame_time)}",
+       y = "Rate of Change [%]") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45), 
+        axis.title.x = element_blank()) +
+  transition_time(year)
 
 
 
@@ -66,10 +72,21 @@ brewer_size %>%
                                 "medium"))) %>% 
   group_by(year, size) %>% 
   count(wt = n_of_brewers) %>% 
-  ggplot() +
-  geom_point(aes(year, n, colour = size)) +
+  ggplot(aes(year, n, colour = size)) +
+  geom_point(size = 3, show.legend = F) +
+  geom_line(size = 1.3, show.legend = F) +
   scale_fill_manual(values = c("#ad8599", "#e09952", "#75abbd")) +
-  theme_minimal() 
+  geom_text(aes(x = 2019, label = size), 
+            hjust = -0.5, show.legend = F, size = 5) +
+  coord_cartesian(clip = "off", xlim = c(2009, 2021)) +
+  scale_x_continuous(breaks=seq(2009, 2019, 1)) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45), 
+        axis.title.x = element_blank()) +
+  transition_reveal(year) +
+  labs(title = "Year: {as.integer(frame_along)}", 
+       y = "Number of Brewers") 
+  
 
 
 # now you could actually see how many breweries fall within the categories
