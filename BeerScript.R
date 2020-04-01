@@ -34,6 +34,56 @@ brewer_size %>%
   theme_minimal() 
 
 
+# New Idea ----------------------------------------------------------------
+
+
+# I just had an idea
+brewer_size %>% 
+  filter(total_barrels != is.na(total_barrels)) %>% 
+  mutate(size = if_else(total_barrels <= brewer_quant[[2]], "small",
+                        if_else(total_barrels >= brewer_quant[[4]], "large",
+                                "medium"))) %>% 
+  group_by(year, size) %>% 
+  count(wt = n_of_brewers) %>% 
+  group_by(size) %>% 
+  arrange(size) %>% 
+  mutate(rate_change = ((n-lag(n))/n)*100) %>% # ROC = ((B-A)/A)*100)
+  ggplot(aes(year, rate_change)) +
+  geom_segment(aes(xend = year, y = 0, yend = rate_change),
+               colour = "grey") +
+  geom_point(aes(colour = size), size=3, show.legend = F) +
+  facet_grid( ~ size) +
+  scale_fill_manual(values = c("#ad8599", "#e09952", "#75abbd")) +
+  theme_minimal()
+
+
+
+# first plot
+brewer_size %>% 
+  filter(total_barrels != is.na(total_barrels)) %>% 
+  mutate(size = if_else(total_barrels <= brewer_quant[[2]], "small",
+                        if_else(total_barrels >= brewer_quant[[4]], "large",
+                                "medium"))) %>% 
+  group_by(year, size) %>% 
+  count(wt = n_of_brewers) %>% 
+  ggplot() +
+  geom_point(aes(year, n, colour = size)) +
+  scale_fill_manual(values = c("#ad8599", "#e09952", "#75abbd")) +
+  theme_minimal() 
+
+
+# now you could actually see how many breweries fall within the categories
+# To do: 
+# - make a gif with a line chart with large, medium, small
+# - add another plot where you can see the rate of change 
+#    (what ever that means, animated as well)
+# this is going to be messy, don't know if cowplot works with gganimate
+# Idea for rate of change: 
+# calculate daily rate of change...
+  # ROC = ((B-A)/A)*100)
+
+# Map ---------------------------------------------------------------------
+
 # now we want to add a map where we show the the per capita consumption per state and 
 # the consumption per state
 # add consumption per capita per state
@@ -89,7 +139,7 @@ map <- beer_states %>%
                                                      unit = "cm"),),
         plot.caption = element_text(size = 7,
                                     hjust = 1,
-                                    margin = margin(t = -0.4,
+                                    margin = margin(t = 0,
                                                     b = 0,
                                                     unit = "cm"),
                                     lineheight = .5,
