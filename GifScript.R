@@ -2,13 +2,19 @@ library(tidyverse)
 library(gganimate)
 
 # Get the Data
-
 brewer_size <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-03-31/brewer_size.csv')
+
+# load my theme
+source("my_theme.R")
 
 # first keep it simple and look at brewer sizes per year
 # I want a time series vs. total_barrels per brewer size
 # before that, I divide brewer size in 3 categories: small, medium, large
 brewer_quant <- brewer_size %>% {quantile(.$total_barrels, na.rm = T)}
+
+
+# first plot trial --------------------------------------------------------
+
 
 brewer_size %>% 
   filter(total_barrels != is.na(total_barrels)) %>% 
@@ -31,6 +37,7 @@ brewer_size %>%
 
 
 # I just had an idea
+
 brewer_size %>% 
   filter(total_barrels != is.na(total_barrels)) %>% 
   mutate(size = if_else(total_barrels <= brewer_quant[[2]], "small",
@@ -43,15 +50,18 @@ brewer_size %>%
   mutate(rate_change = ((n-lag(n))/n)*100) %>% # ROC = ((B-A)/A)*100)
   ggplot(aes(year, rate_change)) +
   geom_segment(aes(xend = year, y = 0, yend = rate_change),
-               colour = "grey") +
-  geom_point(aes(colour = size), size=3, show.legend = F) +
+               colour = "grey", size = 1.65) +
+  geom_point(aes(fill = size), size = 3.5,
+             shape = 21, colour = "black") +
+  geom_hline(yintercept = 0) +
   facet_grid( ~ size) +
-  scale_fill_manual(values = c("#ad8599", "#e09952", "#75abbd")) +
+  scale_colour_manual(values = c("#ad8599", "#e09952", "#75abbd")) +
   scale_x_continuous(breaks=seq(2009, 2019, 2)) +
   labs(y = "Rate of Change [%]") +
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45), 
-        axis.title.x = element_blank()) +
+  coord_cartesian(ylim = c(-20, 100)) +
+  my_theme
+
++
   transition_time(year)
 
 

@@ -1,26 +1,25 @@
-
-
-
 my_theme <-   theme(
-      # remove all axes
-      axis.line = element_blank(),
-      axis.text.x = element_blank(),
-      axis.text.y = element_blank(),
-      axis.ticks = element_blank(),
+      # remove legend
+      legend.position = "none",
+      # background
+      strip.background = element_blank(), 
+      panel.background = element_blank(),
+      # axis
+      axis.text.x = element_text(angle = 45, size = 7.5),
+      axis.text.y = element_text(size = 9),
+      # axis.ticks = element_blank(),
       axis.title.x = element_blank(),
-      axis.title.y = element_blank(),
-      # add a subtle grid
-      # panel.grid.major = element_line(color = "#dbdbd9", size = 0.2),
+      axis.title.y = element_text(size = 11),
+      # remove grid lines
       panel.grid.major = element_blank(),
       panel.grid.minor = element_blank(),
-      # borders and margins
-      plot.margin = unit(c(.5, .5, .2, .5), "cm"),
-      panel.border = element_blank(),
-      panel.spacing = unit(c(-.1, 0.2, .2, 0.2), "cm"),
+      # # borders and margins
+      # plot.margin = unit(c(.5, .5, .2, .5), "cm"),
+      # panel.border = element_blank(),
+      # panel.spacing = unit(c(-.1, 0.2, .2, 0.2), "cm"),
       # titles
-      legend.title = element_text(size = 10),
-      legend.text = element_text(size = 8, hjust = 0),
-      plot.title = element_text(size = 14, hjust = 0, 
+      strip.text = element_text(size = 11),
+      plot.title = element_text(size = 14, hjust = 0.5, 
                                 margin = margin(t = -0.3,
                                                 b = .1,
                                                 unit = "cm"),),
@@ -36,4 +35,4 @@ my_theme <-   theme(
                                                   b = 0,
                                                   unit = "cm"),
                                   lineheight = .4,
-                                  color = "#939184") )
+                                  color = "#939184"))
