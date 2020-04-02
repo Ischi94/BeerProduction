@@ -1,5 +1,6 @@
 library(tidyverse)
-library(gganimate)
+library(gganimate) # for gifs
+library(magick) # for combining of gifs
 
 # Get the Data
 brewer_size <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-03-31/brewer_size.csv')
@@ -8,37 +9,40 @@ brewer_size <- readr::read_csv('https://raw.githubusercontent.com/rfordatascienc
 source("my_theme.R")
 
 # first keep it simple and look at brewer sizes per year
-# I want a time series vs. total_barrels per brewer size
-# before that, I divide brewer size in 3 categories: small, medium, large
+# I want a time series vs. number of brewers per brewer size
+# for that, I divide brewer size in 3 categories: small, medium, large
 brewer_quant <- brewer_size %>% {quantile(.$total_barrels, na.rm = T)}
 
 
-# first plot trial --------------------------------------------------------
-
-
-brewer_size %>% 
+# how did the number of each size change over time?
+nr_change <- brewer_size %>% 
   filter(total_barrels != is.na(total_barrels)) %>% 
   mutate(size = if_else(total_barrels <= brewer_quant[[2]], "small",
                         if_else(total_barrels >= brewer_quant[[4]], "large",
                                 "medium"))) %>% 
   group_by(year, size) %>% 
-  count() %>% 
-  group_by(year) %>% 
-  mutate(prop_n = n/ sum(n)) %>% 
-  ggplot() +
-  #  geom_line(aes(year, prop_n, colour = size))
-  #  geom_area(aes(year, prop_n, fill = size)) +
-  geom_col(aes(year, prop_n, fill = size), width = 1) +
+  count(wt = n_of_brewers) %>% 
+  ggplot(aes(year, n, colour = size)) +
+  geom_point(size = 3) +
+  geom_line(size = 1.3) +
+  geom_segment(aes(xend = 2019.3, yend = n, group = size),
+               linetype = 2, colour = 'grey') + 
   scale_fill_manual(values = c("#ad8599", "#e09952", "#75abbd")) +
-  theme_minimal() 
+  geom_text(aes(x = 2019, label = size), 
+            hjust = -0.5, show.legend = F, size = 5) +
+  coord_cartesian(clip = "off", xlim = c(2009, 2021)) +
+  scale_x_continuous(breaks=seq(2009, 2019, 1)) +
+  my_theme +
+  transition_reveal(year) +
+  labs(title = "Year: {as.integer(frame_along)}", 
+       y = "Number of Brewers") 
+
+# animate nr_change to a gif
+nr_gif <- animate(nr_change, width = 240*1.91, height = 310/2)
 
 
-# New Idea ----------------------------------------------------------------
-
-
-# I just had an idea
-
-brewer_size %>% 
+# visualise rate of change (roc) for each size
+roc <- brewer_size %>% 
   filter(total_barrels != is.na(total_barrels)) %>% 
   mutate(size = if_else(total_barrels <= brewer_quant[[2]], "small",
                         if_else(total_barrels >= brewer_quant[[4]], "large",
@@ -59,46 +63,27 @@ brewer_size %>%
   scale_x_continuous(breaks=seq(2009, 2019, 2)) +
   labs(y = "Rate of Change [%]") +
   coord_cartesian(ylim = c(-20, 100)) +
-  my_theme
-
-+
+  my_theme +
   transition_time(year)
 
+# animate roc to a gif
+roc_gif <- animate(roc, width = 240*1.91, height = 310/2)
+
+# combine gifs to one
+roc_mgif <- image_read(roc_gif)
+nr_mgif <- image_read(nr_gif)
+
+# stack them
+final_gif <- image_append(c(roc_mgif[1], nr_mgif[1]), stack = T)
+
+# iterate
+for(i in 2:100){
+  combined <- image_append(c(roc_mgif[i], nr_mgif[i]), stack = T)
+  final_gif <- c(final_gif, combined)
+}
+
+# save the gif
+anim_save("brewers_vs_time.gif", final_gif)
 
 
-# first plot
-brewer_size %>% 
-  filter(total_barrels != is.na(total_barrels)) %>% 
-  mutate(size = if_else(total_barrels <= brewer_quant[[2]], "small",
-                        if_else(total_barrels >= brewer_quant[[4]], "large",
-                                "medium"))) %>% 
-  group_by(year, size) %>% 
-  count(wt = n_of_brewers) %>% 
-  ggplot(aes(year, n, colour = size)) +
-  geom_point(size = 3, show.legend = F) +
-  geom_line(size = 1.3, show.legend = F) +
-  geom_segment(aes(xend = 2019.3, yend = n, group = size),
-               linetype = 2, colour = 'grey') + 
-  scale_fill_manual(values = c("#ad8599", "#e09952", "#75abbd")) +
-  geom_text(aes(x = 2019, label = size), 
-            hjust = -0.5, show.legend = F, size = 5) +
-  coord_cartesian(clip = "off", xlim = c(2009, 2021)) +
-  scale_x_continuous(breaks=seq(2009, 2019, 1)) +
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45), 
-        axis.title.x = element_blank()) +
-  transition_reveal(year) +
-  labs(title = "Year: {as.integer(frame_along)}", 
-       y = "Number of Brewers") 
-
-
-# now you could actually see how many breweries fall within the categories
-# To do: 
-# - make a gif with a line chart with large, medium, small
-# - add another plot where you can see the rate of change 
-#    (what ever that means, animated as well)
-# this is going to be messy, don't know if cowplot works with gganimate
-# Idea for rate of change: 
-# calculate daily rate of change...
-# ROC = ((B-A)/A)*100)
 

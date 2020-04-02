@@ -19,8 +19,8 @@ my_theme <-   theme(
       # panel.spacing = unit(c(-.1, 0.2, .2, 0.2), "cm"),
       # titles
       strip.text = element_text(size = 11),
-      plot.title = element_text(size = 14, hjust = 0.5, 
-                                margin = margin(t = -0.3,
+      plot.title = element_text(size = 16, hjust = 0.5, 
+                                margin = margin(t = 0.3,
                                                 b = .1,
                                                 unit = "cm"),),
       plot.subtitle = element_text(size = 9, hjust = 0,
